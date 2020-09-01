@@ -1,4 +1,4 @@
-# jetcam_bo
+# jetcam_b
 JetCam_bo is an easy to use Python camera interface for NVIDIA Jetson.
 
 This is forked form [jetcam](https://github.com/NVIDIA-AI-IOT/jetcam), intended to be used by BillioTech Team. 
@@ -10,8 +10,8 @@ If you find an issue, please [let us know](../..//issues)!
 ## Setup
 
 ```bash
-git clone https://github.com/youyoubilly/jetcam_bo.git
-cd jetcam_bo
+git clone https://github.com/youyoubilly/jetcam_b.git
+cd jetcam_b
 sudo python3 setup.py install
 ```
 
