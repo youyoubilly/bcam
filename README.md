@@ -1,5 +1,5 @@
-# jetcam_b
-JetCam_bo is an easy to use Python camera interface for NVIDIA Jetson.
+# BOcam
+BOcam is an easy to use Python camera interface for NVIDIA Jetson.
 
 This is forked form [jetcam](https://github.com/NVIDIA-AI-IOT/jetcam), intended to be used by BillioTech Team. 
 
@@ -12,11 +12,7 @@ If you find an issue, please [let us know](../..//issues)!
 ## Setup
 
 ```bash
-git clone https://github.com/youyoubilly/jetcam_b.git
-cd jetcam_b
+git clone https://github.com/youyoubilly/bocam.git
+cd bocam
 sudo python3 setup.py install
 ```
-
-## See also
-
-- [Servo_Pan_tilt](https://github.com/youyoubilly/servo_pan_tilt) - A tool kit for controlling servo at a simple pan tilt
