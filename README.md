@@ -1,5 +1,5 @@
-# BOcam
-BOcam is an easy to use Python camera interface for NVIDIA Jetson.
+# bcam
+bcam is an easy to use Python camera interface for NVIDIA Jetson.
 
 This is forked form [jetcam](https://github.com/NVIDIA-AI-IOT/jetcam), intended to be used by BillioTech Team. 
 
@@ -12,7 +12,7 @@ If you find an issue, please [let us know](../..//issues)!
 ## Setup
 
 ```bash
-git clone https://github.com/youyoubilly/bocam.git
-cd bocam
+git clone https://github.com/youyoubilly/bcam.git
+cd bcam
 sudo python3 setup.py install
 ```
