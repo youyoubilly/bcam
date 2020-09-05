@@ -9,6 +9,7 @@ import threading
 import numpy as np
 import enum
 import cv2
+import time
 from config import *
 
 class BCamera(SingletonConfigurable):
@@ -24,10 +25,13 @@ class BCamera(SingletonConfigurable):
 
     def __init__(self, *args, **kwargs):
         super(BCamera, self).__init__(*args, **kwargs)
+        self.cap = None
         
-    def config_builder(self, cam_type=DEFAULT_CAM):
+    @staticmethod
+    def builder(cam_type=DEFAULT_CAM):
+        camera = BCamera()
         if cam_type == BCamera.JETSON_CAM:
-            self.cam_config = JetsonCamConfig()
+            camera.cam_config = JetsonCamConfig(camera)
         elif cam_type == BCamera.JETSON_DUAL_CAM:
             pass
         elif cam_type == BCamera.PI_CAM:
@@ -35,35 +39,37 @@ class BCamera(SingletonConfigurable):
         elif cam_type == BCamera.USB_CAM:
             pass
         else:
-            self.cam_config = DefaultCamConfig()
+            camera.cam_config = DefaultCamConfig(camera)
 
-        return self.cam_config
+        return camera.cam_config
+    
+    def capture_frame(self):
+        re, image = self.cap.read()
+        if re:
+            self.value = image
         
+        return self.value
+                
 
     def _capture_frames(self):
         while True:
-            print("6")
+            if self.cap is None:
+                time.sleep(0.5)
+                continue
             re, image = self.cap.read()
-            print("7", re)
             if re:
-                print(image.shape)
                 self.value = image
             else:
                 self.cap.release()
                 break
 
-    def start(self):
-        print("1")
+    def start(self, with_threading=True):
         if not hasattr(self, 'cam_config'):
             self.cam_config = DefaultCamConfig()
-        print("2")
 
-        self.value = np.empty((int(self.cam_config._height), int(self.cam_config._width), 2), dtype=np.uint8)
-        print("3")
-        self.cap = self.cam_config.init_camera()
-        print("4")
-        if not hasattr(self, 'thread') or not self.thread.isAlive():
-            print("5")
+        self.value = np.empty((int(self.cam_config._height), int(self.cam_config._width), 3), dtype=np.uint8)        
+        
+        if with_threading and (not hasattr(self, 'thread') or not self.thread.isAlive()):
             self.thread = threading.Thread(target=self._capture_frames)
             self.thread.start()
 
