@@ -2,8 +2,8 @@ import cv2
 
 class BaseCamConfig():
 
-    def __init__(self):
-        pass
+    def __init__(self, camera):
+        self.camera = camera
 
     def init_camera(self):
         pass
@@ -11,8 +11,8 @@ class BaseCamConfig():
     def device(self, device):
         self._device = device
         return self
-    
-    def disp_resolution(self, width, height):
+
+    def resolution(self, width, height):
         ''' Set display resolution'''
         self._width = width
         self._height = height
@@ -29,24 +29,34 @@ class BaseCamConfig():
         return self
 
     def fps(self, fps):
-        sefl._fps = fps
+        self._fps = fps
         return self
+    
+    
 
 class DefaultCamConfig(BaseCamConfig):
     
-    def __init__(self):
-        super(DefaultCamConfig, self).__init__()
+    def __init__(self, camera):
+        super(DefaultCamConfig, self).__init__(camera)
         self._width = 640
         self._height = 480
+        self._fps = 10
+        self._device = 0
 
-    def init_camera(self):
-        return cv2.VideoCapture(0)
+    def build(self):
+        self.camera.cap = cv2.VideoCapture(self._device)
+        
+        self.camera.cap.set(cv2.CAP_PROP_FPS, self._fps)
+        self.camera.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self._height)
+        self.camera.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self._width)
+        return self.camera
+    
 
 
 class JetsonCamConfig(BaseCamConfig):
 
-    def __init__(self):
-        super(JetsonCamConfig, self).__init__()
+    def __init__(self, camera):
+        super(JetsonCamConfig, self).__init__(camera)
         self._width = 224.0
         self._height = 224.0
         self._fps = 2.0
@@ -61,5 +71,6 @@ class JetsonCamConfig(BaseCamConfig):
             "video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! videoconvert ! appsink' % (
         self._capture_width, self._capture_height, self._fps, self._flip, self._width, self._height)
 
-    def init_camera(self):
-        return cv2.VideoCapture(self._gst_str(), cv2.CAP_GSTREAMER)
+    def build(self):
+        self.camera.cap = cv2.VideoCapture(self._gst_str(), cv2.CAP_GSTREAMER)
+        return self.camera
