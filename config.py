@@ -204,11 +204,14 @@ class JetsonCamConfig(BaseCamConfig):
         self._flip = 0
 
     def _gst_str(self):
-        return 'nvarguscamerasrc ! video/x-raw(memory:NVMM), width=%d, height=%d, " + \
-            "format=(string)NV12, framerate=(fraction)%d/1 ! nvvidconv flip-method=%d ! " + \
-            "video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! videoconvert ! appsink' % (
-        self._capture_width, self._capture_height, self._fps, self._flip, self._width, self._height)
+        return 'nvarguscamerasrc ! video/x-raw(memory:NVMM), width=%d, height=%d, ' % (self._capture_width, self._capture_height) + \
+            'format=(string)NV12, framerate=(fraction)%d/1 ! nvvidconv flip-method=%d ! ' % (self._fps, self._flip)+ \
+            'video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! videoconvert ! appsink' % (self._width, self._height)
 
     def build(self):
+        print(self._gst_str())
         self.camera.cap = cv2.VideoCapture(self._gst_str(), cv2.CAP_GSTREAMER)
+        
+        self.do_verbose()
+        self.do_show_panel()
         return self.camera
