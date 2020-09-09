@@ -5,6 +5,6 @@ setup(
     version='0.0.0',
     description='An easy to use camera interface for NVIDIA Jetson',
     packages=find_packages(),
-    install_requires=[
+    install_requires=['imutils'
     ],
 )

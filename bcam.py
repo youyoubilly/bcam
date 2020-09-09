@@ -9,81 +9,97 @@ import threading
 import numpy as np
 import enum
 import cv2
+import time
+import imutils
+from imutils.video import FPS
+from config import *
 
-def bgr8_to_jpeg(value, quality=10):
-    return bytes(cv2.imencode('.jpg', value)[1])
+class BCamera(SingletonConfigurable):
 
-def frame_dp(camera_image):
-    image = np.copy(camera_image)
-    jpeg_image = bgr8_to_jpeg(image)
-    return jpeg_image
-
-class Camera(SingletonConfigurable):
-    
     value = traitlets.Any()
-    
-    # config
-    width = traitlets.Float(default_value=224.0).tag(config=True)
-    height = traitlets.Float(default_value=224.0).tag(config=True)
-    fps = traitlets.Float(default_value=2.0).tag(config=True)
-    capture_width = traitlets.Integer(default_value=3280).tag(config=True)
-    capture_height = traitlets.Integer(default_value=2464).tag(config=True)
-    is_usb = traitlets.Bool(default_value=False).tag(config=True)
-    brightness = traitlets.Float(default_value=10.0).tag(config=True)
-    device = traitlets.Integer(default_value=1).tag(config=True)
-    flip = traitlets.Integer(default_value=0).tag(config=True)
+
+    DEFAULT_CAM = 0
+    JETSON_CAM = 1
+    JETSON_DUAL_CAM = 2
+    PI_CAM = 3
+    USB_CAM = 4
 
     def __init__(self, *args, **kwargs):
-        super(Camera, self).__init__(*args, **kwargs)
-        self.value = np.empty((int(self.height), int(self.width), 2), dtype=np.uint8)
+        super(BCamera, self).__init__(*args, **kwargs)
+        self.cap = None
+        
+    @classmethod
+    def builder(cls, cam_type=DEFAULT_CAM):
+        camera = BCamera()
+        if cam_type == BCamera.JETSON_CAM:
+            camera.cam_config = JetsonCamConfig(camera)
+        elif cam_type == BCamera.JETSON_DUAL_CAM:
+            pass
+        elif cam_type == BCamera.PI_CAM:
+            pass        
+        elif cam_type == BCamera.USB_CAM:
+            pass
+        else:
+            camera.cam_config = DefaultCamConfig(camera)
 
-        try:
-            if self.is_usb:
-                self.cap = cv2.VideoCapture(self.device)
-                if self.fps != 2.0:
-                    self.cap.set(cv2.CAP_PROP_FPS, self.fps)
-                self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
-                self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
-            else:
-                self.cap = cv2.VideoCapture(self._gst_str(), cv2.CAP_GSTREAMER)
-            
-            print("w:{}, h:{}, fps:{}, brightness:{}, contrast:{}, zoom:{}".format(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH),
-                                                             self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT), 
-                                                             self.cap.get(cv2.CAP_PROP_FPS), 
-                                                             self.cap.get(cv2.CAP_PROP_BRIGHTNESS),
-                                                             self.cap.get(cv2.CAP_PROP_CONTRAST),
-                                                             self.cap.get(cv2.CAP_PROP_ZOOM)))
-            re, image = self.cap.read()
-            print("h, w: {}, {}".format(image.shape[0], image.shape[1]))
+        return camera.cam_config
     
-            if not re:
-                raise RuntimeError('Could not read image from camera.')
-
+    def capture_frame(self):
+        re, image = self.cap.read()
+        if re:
             self.value = image
-            self.start()
-        except:
-            self.stop()
-            raise RuntimeError(
-                'Could not initialize camera.  Please see error trace.')
-
-        atexit.register(self.stop)
+        
+        return self.value
+                
 
     def _capture_frames(self):
+        _fps = FPS()
+        _fps.start()
+        _counter = 0
+        
+        current_fps = 0
+        
         while True:
-            re, image = self.cap.read()
-            if re:
-                self.value = image
-            else:
-                break
+            if self.cap is None:
+                time.sleep(0.5)
+                continue
                 
-    def _gst_str(self):
-        return 'nvarguscamerasrc ! video/x-raw(memory:NVMM), width=%d, height=%d, format=(string)NV12, framerate=(fraction)%d/1 ! nvvidconv flip-method=%d ! video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! videoconvert ! appsink' % (
-                self.capture_width, self.capture_height, self.fps, self.flip, self.width, self.height)
-    
-    def start(self):
-        if not self.cap.isOpened():
-            self.cap.open(self._gst_str(), cv2.CAP_GSTREAMER)
-        if not hasattr(self, 'thread') or not self.thread.isAlive():
+            re, image = self.cap.read()
+            
+            if self.cam_config.rotate_angle() != 0:
+                (h, w) = image.shape[:2]
+                # calculate the center of the image
+                center = (w / 2, h / 2)
+                M = cv2.getRotationMatrix2D(center, self.cam_config.rotate_angle(), 1.0)
+                image = cv2.warpAffine(image, M, (h, w))
+            
+            if re:                
+                if self.cam_config.is_verbose():
+                    image=cv2.putText(image,'FPS: {:.2f}'.format(current_fps),(50,50),cv2.FONT_HERSHEY_COMPLEX,1,(0,0,255),1)
+                    
+                if _counter >= 100:
+                    _fps.stop()
+                    current_fps = _fps.fps()
+                    _fps = FPS()
+                    _counter = 0
+                    _fps.start()
+                    
+                self.value = image
+                _fps.update()
+                
+                _counter+=1
+            else:
+                print("Cam error, will realase the camera.")
+                self.cap.release()
+                break
+
+    def start(self, with_threading=True):
+        if not hasattr(self, 'cam_config'):
+            self.cam_config = DefaultCamConfig()
+
+        self.value = np.empty((int(self.cam_config._height), int(self.cam_config._width), 3), dtype=np.uint8)        
+        
+        if with_threading and (not hasattr(self, 'thread') or not self.thread.isAlive()):
             self.thread = threading.Thread(target=self._capture_frames)
             self.thread.start()
 
@@ -92,7 +108,7 @@ class Camera(SingletonConfigurable):
             self.cap.release()
         if hasattr(self, 'thread'):
             self.thread.join()
-            
+
     def restart(self):
         self.stop()
         self.start()
