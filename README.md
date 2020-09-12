@@ -22,6 +22,7 @@ pip3 install bcam
 from bcam import BCamera
 import traitlets
 import ipywidgets.widgets as widgets
+import cv2
 
 def bgr8_to_jpeg(value):
     return bytes(cv2.imencode('.jpg', value)[1])
@@ -34,7 +35,7 @@ bcam = BCamera.builder() \
 
 bcam.start()
 
-image_widget1 = widgets.Image(format='jpeg', width=400, height=400)
+image_widget = widgets.Image(format='jpeg', width=400, height=400)
 
 display(image_widget)
 
