@@ -1,10 +1,10 @@
 from setuptools import setup, find_packages
 
 setup(
-    name='jetcam_bo',
-    version='0.0.0',
-    description='An easy to use camera interface for NVIDIA Jetson',
+    name='bcam',
+    version='0.0.1',
+    description='An easy to use camera interface for NVIDIA Jetson and raspberry pi',
     packages=find_packages(),
-    install_requires=['imutils'
+    install_requires=['ipywidgets','imutils'
     ],
 )
