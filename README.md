@@ -9,10 +9,40 @@ Quick guide is [here](demo.ipynb)
 
 If you find an issue, please [let us know](../..//issues)!
 
-## Setup
+## Install 
 
 ```bash
-git clone https://github.com/youyoubilly/bcam.git
-cd bcam
-sudo python3 setup.py install
+pip3 install bcam
+```
+
+## Usage
+
+### Start camera from Jupyter Notebook
+```python
+from bcam import BCamera
+import traitlets
+import ipywidgets.widgets as widgets
+
+def bgr8_to_jpeg(value):
+    return bytes(cv2.imencode('.jpg', value)[1])
+
+bcam = BCamera.builder() \
+        .device(0) \
+        .resolution(800, 600) \
+        .fps(5) \
+        .build()
+
+bcam.start()
+
+image_widget1 = widgets.Image(format='jpeg', width=400, height=400)
+
+display(image_widget)
+
+camera_link = traitlets.dlink((bcam, 'value'), (image_widget, 'value'), transform=bgr8_to_jpeg)
+```
+
+### Stop
+```python
+camera_link.release()
+bcam.stop()
 ```

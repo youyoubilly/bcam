@@ -4,15 +4,13 @@
 
 import traitlets
 from traitlets.config.configurable import SingletonConfigurable
-import atexit
 import threading
 import numpy as np
-import enum
 import cv2
 import time
 import imutils
 from imutils.video import FPS
-from config import *
+from .config import *
 
 class BCamera(SingletonConfigurable):
 
