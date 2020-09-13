@@ -22,6 +22,7 @@ pip3 install bcam
 from bcam import BCamera
 import traitlets
 import ipywidgets.widgets as widgets
+import cv2
 
 
 bcam = BCamera.builder() \
