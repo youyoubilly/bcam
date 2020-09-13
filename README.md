@@ -5,7 +5,7 @@ This is forked form [jetcam](https://github.com/NVIDIA-AI-IOT/jetcam), intended 
 
 Of course, You can clone and use it as well, if you find it convenient.
 
-Quick guide is [here](demo.ipynb)
+Quick guide is [here](notebook/single_usb_cam.ipynb)
 
 If you find an issue, please [let us know](../..//issues)!
 
@@ -23,8 +23,6 @@ from bcam import BCamera
 import traitlets
 import ipywidgets.widgets as widgets
 
-def bgr8_to_jpeg(value):
-    return bytes(cv2.imencode('.jpg', value)[1])
 
 bcam = BCamera.builder() \
         .device(0) \
@@ -34,15 +32,14 @@ bcam = BCamera.builder() \
 
 bcam.start()
 
-image_widget1 = widgets.Image(format='jpeg', width=400, height=400)
+widget = widgets.Image(format='jpeg', width=400, height=400)
 
-display(image_widget)
+display(widget)
 
-camera_link = traitlets.dlink((bcam, 'value'), (image_widget, 'value'), transform=bgr8_to_jpeg)
+bcam.link(widget)
 ```
 
 ### Stop
 ```python
-camera_link.release()
 bcam.stop()
 ```

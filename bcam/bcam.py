@@ -25,6 +25,7 @@ class BCamera(SingletonConfigurable):
     def __init__(self, *args, **kwargs):
         super(BCamera, self).__init__(*args, **kwargs)
         self.cap = None
+        self.links = []
         
     @classmethod
     def builder(cls, cam_type=DEFAULT_CAM):
@@ -110,3 +111,16 @@ class BCamera(SingletonConfigurable):
     def restart(self):
         self.stop()
         self.start()
+        for link in self.links:
+            link.release()
+            
+    def bgr8_to_jpeg(self, value):
+        return bytes(cv2.imencode('.jpg', value)[1])
+    
+    def link(self, widget):
+        link = traitlets.dlink((self,'value'), (widget, 'value'), transform=self.bgr8_to_jpeg)
+        self.links.append(link)
+        
+
+
+       
