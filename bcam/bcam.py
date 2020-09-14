@@ -47,7 +47,13 @@ class BCamera(SingletonConfigurable):
         re, image = self.cap.read()
         if re:
             self.value = image
-        
+            if self.cam_config.rotate_angle() != 0:
+                (h, w) = image.shape[:2]
+                # calculate the center of the image
+                center = (w / 2, h / 2)
+                M = cv2.getRotationMatrix2D(center, self.cam_config.rotate_angle(), 1.0)
+                self.value = cv2.warpAffine(image, M, (h, w))
+                
         return self.value
                 
 
@@ -102,6 +108,9 @@ class BCamera(SingletonConfigurable):
             self.thread = threading.Thread(target=self._capture_frames)
             self.thread.start()
 
+    def jpeg(self):
+        return self.bgr8_to_jpeg(self.value)
+    
     def stop(self):
         if hasattr(self, 'cap'):
             self.cap.release()
