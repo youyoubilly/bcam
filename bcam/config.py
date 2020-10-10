@@ -41,13 +41,19 @@ class BaseCamConfig():
         self._hue = value
         return self
     
-    def rotate_clockwise(self):
+    def rotate_270(self):
         self._rotate_angle = 270
         return self
+    
+    def rotate_clockwise(self):
+        return self.rotate_270()
 
-    def rotate_counterclockwise(self):
+    def rotate_90(self):
         self._rotate_angle = 90
         return self
+    
+    def rotate_counterclockwise(self):
+        return self.rotate_90()
     
     def rotate_180(self):
         self._rotate_angle = 180
@@ -189,8 +195,6 @@ class DefaultCamConfig(BaseCamConfig):
         
         return self.camera
     
-
-
 class JetsonCamConfig(BaseCamConfig):
 
     def __init__(self, camera):
@@ -209,6 +213,13 @@ class JetsonCamConfig(BaseCamConfig):
             'video/x-raw, width=(int)%d, height=(int)%d, format=(string)BGRx ! videoconvert ! appsink' % (self._width, self._height)
 
     def build(self):
+        if self.rotate_angle() == 90:
+            self._flip = 3
+        elif self.rotate_angle() == 180:
+            self._flip = 2
+        elif self.rotate_angle() == 270:
+            self._flip = 1
+        
         print(self._gst_str())
         self.camera.cap = cv2.VideoCapture(self._gst_str(), cv2.CAP_GSTREAMER)
         

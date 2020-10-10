@@ -26,6 +26,7 @@ class BCamera(SingletonConfigurable):
         super(BCamera, self).__init__(*args, **kwargs)
         self.cap = None
         self.links = []
+        self._running = False
         
     @classmethod
     def builder(cls, cam_type=DEFAULT_CAM):
@@ -56,7 +57,6 @@ class BCamera(SingletonConfigurable):
                 
         return self.value
                 
-
     def _capture_frames(self):
         _fps = FPS()
         _fps.start()
@@ -64,19 +64,23 @@ class BCamera(SingletonConfigurable):
         
         current_fps = 0
         
-        while True:
+        while self._running:
             if self.cap is None:
                 time.sleep(0.5)
                 continue
                 
             re, image = self.cap.read()
             
-            if self.cam_config.rotate_angle() != 0:
-                (h, w) = image.shape[:2]
-                # calculate the center of the image
-                center = (w / 2, h / 2)
-                M = cv2.getRotationMatrix2D(center, self.cam_config.rotate_angle(), 1.0)
-                image = cv2.warpAffine(image, M, (h, w))
+            angle = self.cam_config.rotate_angle()
+            if angle != 0 and image is not None:
+                if isinstance(self.cam_config, JetsonCamConfig):
+                    pass
+                else:
+                    (h, w) = image.shape[:2]
+                    # calculate the center of the image
+                    center = (w / 2, h / 2)
+                    M = cv2.getRotationMatrix2D(center, angle, 1.0)
+                    image = cv2.warpAffine(image, M, (h, w))
             
             if re:                
                 if self.cam_config.is_verbose():
@@ -105,6 +109,7 @@ class BCamera(SingletonConfigurable):
         self.value = np.empty((int(self.cam_config._height), int(self.cam_config._width), 3), dtype=np.uint8)        
         
         if with_threading and (not hasattr(self, 'thread') or not self.thread.isAlive()):
+            self._running = True
             self.thread = threading.Thread(target=self._capture_frames)
             self.thread.start()
 
@@ -113,6 +118,7 @@ class BCamera(SingletonConfigurable):
     
     def stop(self):
         if hasattr(self, 'cap'):
+            self._running = False
             self.cap.release()
         if hasattr(self, 'thread'):
             self.thread.join()
