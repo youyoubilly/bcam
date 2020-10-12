@@ -1,0 +1,8 @@
+*.pyc
+*.egg
+*.egg-info/*
+
+.ipynb_checkpoints/*
+*/.ipynb_checkpoints/*
+*.code-workspace
+.vscode/settings.json

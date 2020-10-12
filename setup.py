@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name='bcam',
-    version='0.0.8',
+    version='0.0.9',
     author='Kevin Peng, Billy Wang',
     description='An easy to use camera interface for NVIDIA Jetson and raspberry pi',
     long_description=long_description,

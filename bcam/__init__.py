@@ -7,5 +7,5 @@ JETSON_DUAL_CAM = 2
 PI_CAM = 3
 USB_CAM = 4
     
-def builder(cam_type=DEFAULT_CAM):
+def config(cam_type=DEFAULT_CAM):
     return BCamera.builder(cam_type)
