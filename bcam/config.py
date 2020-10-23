@@ -41,6 +41,15 @@ class BaseCamConfig():
         self._hue = value
         return self
     
+    def flip(self, flip):
+        if flip == 1:
+            return self.rotate_90()
+        elif flip == 2:
+            return self.rotate_180()
+        elif flip == 3:
+            return self.rotate_270()
+        return self
+    
     def rotate_270(self):
         self._rotate_angle = 270
         return self
